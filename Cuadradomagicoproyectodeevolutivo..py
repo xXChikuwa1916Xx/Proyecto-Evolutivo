@@ -53,6 +53,10 @@ class MagicSquare:
     def get_fitness_percentual(self):
         return 100 * (1 - self.get_fitness() / (self.size * self.size * self.size))
  
+
+    def get_fitness_percentuales(self):
+        return self.get_fitness() / (self.size + self.size + 2)
+
     def __str__(self):
         s = ""
         for i in range(self.size):
@@ -70,9 +74,9 @@ class MagicSquare:
         return s
 
 class GeneticAlgorithm:
-    MUTATION_RATE = 0.01
+    MUTATION_RATE = 0.02
     TOURNAMENT_SIZE = 3
-
+    
     def __init__(self, population_size, num_generations, size):
         self.population_size = population_size
         self.num_generations = num_generations
@@ -92,7 +96,10 @@ class GeneticAlgorithm:
     def evolve(self):
         # Inicializar listas para almacenar la aptitud de cada individuo y la
         # aptitud promedio de la población en cada generación
+        
         self.average_fitnesses = []
+        self.avg_fitness_list = []
+        self.max_fitness_list = []
 
         for i in range(self.num_generations):
             self.population = self.reproduce()
@@ -102,7 +109,23 @@ class GeneticAlgorithm:
             # población en esta generación y almacenarlas en las listas
             individual_fitnesses = [ind.get_fitness() for ind in self.population]
             self.average_fitnesses.append(sum(individual_fitnesses) / len(individual_fitnesses))
+            average_fitnesses=(sum(individual_fitnesses) / len(individual_fitnesses))
 
+            #calculando adaptación promedio
+            total = 0
+            for i in self.population:
+                total += i.get_fitness_percentual()
+            avg_fitness = total/len(self.population)
+
+            #calculando el fitness máximo
+            best_fitness = max(self.population, key=lambda x: x.get_fitness_percentual()).get_fitness_percentual()
+
+            #guardando el mejor individuo
+            best_ind = max(self.population, key=lambda x: x.get_fitness_percentual())
+
+            self.avg_fitness_list.append(avg_fitness)
+            self.max_fitness_list.append(max(self.population, key=lambda x: x.get_fitness_percentual()).get_fitness_percentual())
+            
     def reproduce(self):
         new_population = set()
         while len(new_population) < self.population_size:
@@ -150,7 +173,7 @@ class GeneticAlgorithm:
         self.population = list(self.population)
         self.population.sort(key=lambda x: x.get_fitness())
         return self.population[0]
-
+        
 if __name__ == "__main__":
     size = int(input("Ingresa el tamaño del cuadrado mágico: "))
     population_size = int(input("Ingresa el tamaño de la población: "))
@@ -160,17 +183,17 @@ if __name__ == "__main__":
     best_square = ga.get_best_solution()
     print("Cuadrado mágico con la mayor aptitud:")
     print(best_square)
-    print("Porcentaje de aptitud del cuadrado mágico:")
+    print("Porcentaje de adaptacion del cuadrado mágico:")
     print(best_square.get_fitness_percentual())
+    print("Porcentaje de aptitud del cuadrado mágico:")
+    print(best_square.get_fitness_percentuales())
 
     # Crear la gráfica
-    plt.plot(ga.average_fitnesses)
-
-    # Añadir título, etiquetas de eje y leyenda
-    plt.title("Aptitud promedio de la población en cada generación")
-    plt.xlabel("Número de generación")
-    plt.ylabel("Aptitud promedio")
-    plt.legend(["Población"])
-
-    # Mostrar la gráfica
+    plt.plot(ga.average_fitnesses, color='red', linestyle='solid', label="Promedio de Aptitud")
+    plt.plot(ga.avg_fitness_list, color='blue', linestyle='solid', label="Adaptacion promedio")
+    plt.plot(ga.max_fitness_list, color='green', linestyle='dashed', label="Adaptacion maxima")
+    plt.title("Evolucion del fitness por generacion")
+    plt.xlabel("Generacion")
+    plt.ylabel("Adaptacion")
+    plt.legend()
     plt.show()
